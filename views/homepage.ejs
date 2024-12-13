@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Homepage</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+ <div class="menu-container">
+    <button class="hamburger" onclick="toggleMenu()">☰</button> 
+    <nav id="menu" class="hidden">
+
+        <a href="/homepage">Homepage</a>
+        <a href="/accessories">Accessories</a>
+        <a href="/products">Products</a> 
+        <a href="/contactUs">Contact Us</a>
+        <a href="/cart">My Cart</a>
+    </nav>
+</div>
+  
+  <h1>Welcome to our Phone Specs Site!</h1>
+  <p>Navigate to our products page</p>
+
+
+  <script>
+      function toggleMenu() {
+        const menu = document.getElementById('menu');
+        menu.classList.toggle('hidden'); // Using the hidden class for toggle
+      }
+    </script>
+</body>
+</html>

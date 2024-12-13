@@ -1,0 +1,155 @@
+/* Base Styles */
+body {
+    font-family: 'Arial', sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f9f9f9;
+    color: #333;
+    line-height: 1.6;
+}
+
+
+/* Menu Styles (Updated) */
+.menu-container {
+    display: flex;
+    justify-content: flex-start; /* Align hamburger to the left */
+    align-items: center; /* Vertically center items */
+    padding: 10px 20px;
+    background-color: #007bff; /* Example background color */
+}
+
+
+.hamburger {
+    font-size: 24px;
+    color: white;
+    background: none;
+    border: none;
+    padding: 5px 10px; /* Add padding */
+    cursor: pointer;
+}
+
+
+#menu { /* Target the nav with ID 'menu' */
+  position: absolute;
+  top: 60px; /* Adjust as needed */
+  left: 0; /* Align to left edge */
+  background-color: #fff;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2); /* Add shadow */
+  border-radius: 5px; /* Rounded corners */
+  z-index: 1000;
+}
+
+
+#menu a {  
+    display: block; /* Stack links vertically */
+    padding: 10px 20px;
+    text-decoration: none;
+    color: #333;  
+    border-bottom: 1px solid #eee; /* Separator between menu items */
+}
+
+
+#menu a:hover {
+    background-color: #f2f2f2; /* Highlight on hover */
+}
+
+
+
+/* hidden Utility Class (for toggling) */
+.hidden {
+    display: none; 
+}
+
+
+/* The rest of the CSS (Typography, Links, Container, etc.) from original file remains the same */
+
+
+
+/* Product Card */
+.product-card {
+  background: white;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  text-align: center;
+  transition: transform 0.2s ease-in-out;
+  margin-bottom: 20px;
+  width: calc(33.33% - 20px); /* 3 products per row with spacing */
+  box-sizing: border-box; /* Include padding and border in element width */
+}
+
+
+
+/* Product Container */
+.product-container {
+  display: flex;
+  flex-wrap: wrap;         /* Allow items to wrap to the next line */
+  justify-content: space-between;   /* Distribute space evenly between items */
+}
+
+/* Text-center */
+.text-center{
+  text-align: center;
+}
+
+
+
+.product-card:hover {
+  transform: scale(1.05);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+}
+
+
+.product-name {
+  font-size: 1.5em;
+  margin: 10px 0;
+  color: #333;
+}
+
+
+.product-maker {
+  font-size: 1em;
+  color: #666;
+}
+
+
+.product-link {
+  display: inline-block;
+  margin-top: 10px;
+  padding: 10px 15px;
+  text-decoration: none;
+  background-color: #007bff;
+  color: white;
+  border-radius: 5px;
+  transition: background-color 0.2s ease-in-out;
+}
+
+
+
+.product-link:hover {
+  background-color: #0056b3;
+}
+
+
+/* Adjust .container to accommodate 3 products in row on larger screens */
+@media (min-width: 768px) {
+  .container {
+    padding: 20px; /* Consistent with all viewport widths */
+    
+  }
+}
+
+/* Contact Us Page Styles */
+.contact-info {
+  margin-top: 20px;  /* Add some space above the info */
+}
+
+.contact-info p {
+  margin-bottom: 10px;  /* Add some space between lines */
+}
+
+
+.contact-info strong{
+  font-weight: bold;
+}
