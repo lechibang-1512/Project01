@@ -8,7 +8,6 @@
     <div class="menu-container">
         <button class="hamburger" onclick="toggleMenu()">☰</button> 
         <nav id="menu" class="hidden">
-            <a href="/homepage">Homepage</a>
             <a href="/accessories">Accessories</a>
             <a href="/products">Products</a> 
             <a href="/contactUs">Contact Us</a>
@@ -33,7 +32,7 @@
                 <% cart.forEach(product => { %>
                   <tr>
                     <td><%= product.sm_name %></td>
-                    <td><%= product.price %></td>
+                    <td><%= product.sm_price %></td>
                     <td><%= product.quantity %></td>
                     <td>
                       <form action="/remove-from-cart" method="post">
