@@ -160,10 +160,9 @@
                         <p class="product-price">Price: $<%= product.sm_price.toFixed(2) %></p>
                         <p class="product-inventory">In Stock: <%= product.sm_inventory %></p>
                         <a class="product-link" href="/product/<%= product.id %>">View Details</a>
-                         <!-- Update/Delete Buttons -->
+                         <!-- Update Button -->
                         <div class="product-actions">
                             <button onclick="openModal('update', this.closest('.product-card').dataset.product)">Update</button>
-                             <button onclick="confirmDelete(this.closest('.product-card').dataset.product)">Delete</button>
                         </div>
                     </div>
                 </div>
@@ -316,23 +315,12 @@
                 document.getElementById('height_mm').value = product.height_mm;
                 document.getElementById('weight').value = product.weight;
                 document.getElementById('image_url').value = product.image_url;
-            } else if (action === 'delete') {
-                modalTitle.innerText = 'Confirm Deletion';
-                modalAction.value = 'delete';
-                productId.value = productData.id; // Directly passing productData for delete
             }
         }
 
         function closeModal() {
             var modal = document.getElementById('productModal');
             modal.style.display = "none";
-        }
-
-        function confirmDelete(productData) {
-            var confirmation = confirm('Are you sure you want to delete this product?');
-            if (confirmation) {
-                openModal('delete', productData);
-            }
         }
     </script>
 </body>
