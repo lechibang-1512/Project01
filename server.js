@@ -12,6 +12,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
+
 // MySQL connection pool
 const pool = mysql.createPool({
     host: 'localhost',
@@ -43,17 +44,17 @@ app.get('/', (req, res) => {
 // Products route with filtering
 app.get('/products', async (req, res, next) => {
     const { brand, subbrand, model } = req.query;
-    
+
     try {
         // Fetch filter options
         const [brands] = await req.db.execute(
             'SELECT DISTINCT sm_maker FROM phone_specs ORDER BY sm_maker'
         );
-        
+
         const [subbrands] = await req.db.execute(
             'SELECT DISTINCT subbrand FROM phone_specs WHERE subbrand IS NOT NULL ORDER BY subbrand'
         );
-        
+
         const [models] = await req.db.execute(
             'SELECT DISTINCT sm_name FROM phone_specs ORDER BY sm_name'
         );
@@ -76,7 +77,7 @@ app.get('/products', async (req, res, next) => {
             FROM phone_specs 
             WHERE 1=1
         `;
-        
+
         const params = [];
 
         if (brand) {
@@ -123,8 +124,8 @@ app.get('/product/:id', async (req, res, next) => {
         );
 
         if (!product || product.length === 0) {
-            return res.status(404).render('error', { 
-                message: 'Product not found' 
+            return res.status(404).render('error', {
+                message: 'Product not found'
             });
         }
 
@@ -187,11 +188,71 @@ app.get('/customerInfo', async (req, res, next) => {
     }
 });
 
+
+// Product Management Route (CRUD)
+app.post('/products/manage', async (req, res, next) => {
+    const { action, id, sm_name, sm_maker, subbrand, sm_price, sm_inventory, color, ram, rom, water_and_dust_rating,
+             processor, process_node, cpu_cores, cpu_frequency, gpu, memory_type, expandable_memory, length_mm,
+             width_mm, thickness_mm, weight_g, display_size, resolution, pixel_density, refresh_rate, brightness,
+             display_features, rear_camera_main, rear_camera_macro, rear_camera_features, rear_video_resolution,
+             front_camera, front_camera_features, front_video_resolution, battery_capacity, fast_charging,
+             connector, security_features, sim_card, nfc, network_bands, wireless_connectivity, navigation,
+             audio_jack, audio_playback, video_playback, sensors, operating_system, package_contents
+           } = req.body;
+
+    const productData = {
+        sm_name, sm_maker, subbrand, sm_price, sm_inventory, color, ram, rom,
+        water_and_dust_rating, processor, process_node, cpu_cores, cpu_frequency, gpu,
+        memory_type, expandable_memory, length_mm, width_mm, thickness_mm, weight_g,
+        display_size, resolution, pixel_density, refresh_rate, brightness, display_features,
+        rear_camera_main, rear_camera_macro, rear_camera_features, rear_video_resolution,
+        front_camera, front_camera_features, front_video_resolution, battery_capacity,
+        fast_charging, connector, security_features, sim_card, nfc, network_bands,
+        wireless_connectivity, navigation, audio_jack, audio_playback, video_playback,
+        sensors, operating_system, package_contents
+    };
+    try {
+        if (action === 'add') {
+            const [result] = await req.db.execute(
+                'INSERT INTO phone_specs SET ?',
+                [productData]
+            );
+           if (result.affectedRows === 1){
+                console.log('Added product:', sm_name);
+            }
+
+        } else if (action === 'update') {
+             const [result] = await req.db.execute(
+                'UPDATE phone_specs SET ? WHERE id = ?',
+                [productData, id]
+            );
+             if (result.affectedRows === 1){
+                console.log('Updated product:', sm_name);
+            }
+
+
+        } else if (action === 'delete') {
+            const [result] = await req.db.execute(
+                'DELETE FROM phone_specs WHERE id = ?',
+                [id]
+            );
+             if (result.affectedRows === 1){
+                console.log('Deleted product with id:', id);
+            }
+        }
+        res.redirect('/products'); // Redirect back to products page
+    } catch (error) {
+        console.error('Error during product management:', error);
+        next(error);
+    }
+});
+
+
 // Error handling middleware
 app.use((err, req, res, next) => {
     console.error('Error:', err);
-    res.status(500).render('error', { 
-        message: 'An error occurred. Please try again later.' 
+    res.status(500).render('error', {
+        message: 'An error occurred. Please try again later.'
     });
 });
 
