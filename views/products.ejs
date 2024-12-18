@@ -82,7 +82,7 @@
 </head>
 <body>
     <div class="menu-container">
-        <button class="hamburger" onclick="toggleMenu()">☰</button> 
+        <button class="hamburger" onclick="toggleMenu()">☰</button>
         <nav id="menu" class="hidden">
             <a href="/products">Products</a>
             <a href="/purchaseHistory">Purchase History</a>
@@ -92,7 +92,7 @@
 
     <div class="container">
         <h1 class="text-center">All Products</h1>
-        
+
          <!-- Add Device Button -->
         <button class="add-device-btn" onclick="openModal('add', null)">Add Device</button>
         <!-- Filters Section -->
@@ -103,14 +103,14 @@
                     <select name="brand" id="brand" onchange="this.form.submit()">
                         <option value="">All Brands</option>
                         <% brands.forEach(function(brand) { %>
-                            <option value="<%= brand.sm_maker %>" 
+                            <option value="<%= brand.sm_maker %>"
                                     <%= selectedBrand === brand.sm_maker ? 'selected' : '' %>>
                                 <%= brand.sm_maker %>
                             </option>
                         <% }); %>
                     </select>
                 </div>
-                
+
                 <div class="filter">
                     <label for="subbrand">Sub-brand:</label>
                     <select name="subbrand" id="subbrand" onchange="this.form.submit()">
@@ -123,7 +123,7 @@
                         <% }); %>
                     </select>
                 </div>
-                
+
                 <div class="filter">
                     <label for="model">Model:</label>
                     <select name="model" id="model" onchange="this.form.submit()">
@@ -150,14 +150,14 @@
         <div class="product-container">
             <% products.forEach(function(product) { %>
                 <div class="product-card" data-product='<%= JSON.stringify(product) %>'>
-                    <img src="<%= product.image_url || '/images/placeholder.png' %>" 
-                         alt="<%= product.sm_name %>" 
+                    <img src="<%= product.image_url || '/images/placeholder.png' %>"
+                         alt="<%= product.sm_name %>"
                          class="product-image">
                     <div class="product-info">
                         <h2 class="product-name"><%= product.sm_name %></h2>
                         <p class="product-maker">Brand: <%= product.sm_maker %></p>
                         <p class="product-subbrand">Sub-brand: <%= product.subbrand || 'N/A' %></p>
-                        <p class="product-price">Price: $<%= product.sm_price.toFixed(2) %></p>
+                        <p class="product-price">Price: $<%= Number(product.sm_price).toFixed(2) %></p> <!-- Fixed price issue -->
                         <p class="product-inventory">In Stock: <%= product.sm_inventory %></p>
                         <a class="product-link" href="/product/<%= product.id %>">View Details</a>
                          <!-- Update Button -->
@@ -176,7 +176,7 @@
             <form id="productForm" method="post" action="/products/manage">
                 <input type="hidden" id="modalAction" name="action" value="">
                 <input type="hidden" id="productId" name="id" value="">
-                
+
                  <div class="form-group">
                     <label for="sm_name">Model Name:</label>
                     <input type="text" id="sm_name" name="sm_name" required>
@@ -280,11 +280,11 @@
             var modalTitle = document.getElementById('modalTitle');
             var modalAction = document.getElementById('modalAction');
             var productId = document.getElementById('productId');
-            
+
             // Reset fields
             form.reset();
             modal.style.display = "block";
-            
+
             if (action === 'add') {
                 modalTitle.innerText = 'Add Product';
                 modalAction.value = 'add';
