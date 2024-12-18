@@ -191,59 +191,139 @@ app.get('/customerInfo', async (req, res, next) => {
 
 // Product Management Route (CRUD)
 app.post('/products/manage', async (req, res, next) => {
-    const { action, id, sm_name, sm_maker, subbrand, sm_price, sm_inventory, color, ram, rom, water_and_dust_rating,
-             processor, process_node, cpu_cores, cpu_frequency, gpu, memory_type, expandable_memory, length_mm,
-             width_mm, thickness_mm, weight_g, display_size, resolution, pixel_density, refresh_rate, brightness,
-             display_features, rear_camera_main, rear_camera_macro, rear_camera_features, rear_video_resolution,
-             front_camera, front_camera_features, front_video_resolution, battery_capacity, fast_charging,
-             connector, security_features, sim_card, nfc, network_bands, wireless_connectivity, navigation,
-             audio_jack, audio_playback, video_playback, sensors, operating_system, package_contents
-           } = req.body;
-
-    const productData = {
-        sm_name, sm_maker, subbrand, sm_price, sm_inventory, color, ram, rom,
-        water_and_dust_rating, processor, process_node, cpu_cores, cpu_frequency, gpu,
-        memory_type, expandable_memory, length_mm, width_mm, thickness_mm, weight_g,
-        display_size, resolution, pixel_density, refresh_rate, brightness, display_features,
-        rear_camera_main, rear_camera_macro, rear_camera_features, rear_video_resolution,
-        front_camera, front_camera_features, front_video_resolution, battery_capacity,
-        fast_charging, connector, security_features, sim_card, nfc, network_bands,
-        wireless_connectivity, navigation, audio_jack, audio_playback, video_playback,
-        sensors, operating_system, package_contents
-    };
     try {
-        if (action === 'add') {
-            const [result] = await req.db.execute(
-                'INSERT INTO phone_specs SET ?',
-                [productData]
-            );
-           if (result.affectedRows === 1){
-                console.log('Added product:', sm_name);
+        // Validate that action exists
+        if (!req.body.action) {
+            return res.status(400).json({ error: 'Action is required' });
+        }
+
+        const { action, id } = req.body;
+
+        // For delete operation, we only need the id
+        if (action === 'delete') {
+            if (!id) {
+                return res.status(400).json({ error: 'Product ID is required for deletion' });
             }
 
-        } else if (action === 'update') {
-             const [result] = await req.db.execute(
-                'UPDATE phone_specs SET ? WHERE id = ?',
-                [productData, id]
-            );
-             if (result.affectedRows === 1){
-                console.log('Updated product:', sm_name);
-            }
-
-
-        } else if (action === 'delete') {
             const [result] = await req.db.execute(
                 'DELETE FROM phone_specs WHERE id = ?',
                 [id]
             );
-             if (result.affectedRows === 1){
-                console.log('Deleted product with id:', id);
+
+            if (result.affectedRows === 0) {
+                return res.status(404).json({ error: 'Product not found' });
             }
+
+            return res.redirect('/products');
         }
-        res.redirect('/products'); // Redirect back to products page
+
+        // For add and update operations, validate required fields
+        if (!req.body.sm_name || !req.body.sm_maker) {
+            return res.status(400).json({ error: 'Product name and maker are required' });
+        }
+
+        // Convert numeric fields to appropriate types
+        const productData = {
+            sm_name: req.body.sm_name,
+            sm_maker: req.body.sm_maker,
+            sm_price: req.body.sm_price ? parseInt(req.body.sm_price, 10) : null,
+            sm_inventory: req.body.sm_inventory ? parseInt(req.body.sm_inventory, 10) : null,
+            subbrand: req.body.subbrand || null,
+            color: req.body.color || null,
+            water_and_dust_rating: req.body.water_and_dust_rating || null,
+            processor: req.body.processor || null,
+            process_node: req.body.process_node || null,
+            cpu_cores: req.body.cpu_cores || null,
+            cpu_frequency: req.body.cpu_frequency || null,
+            gpu: req.body.gpu || null,
+            memory_type: req.body.memory_type || null,
+            ram: req.body.ram || null,
+            rom: req.body.rom || null,
+            expandable_memory: req.body.expandable_memory || null,
+            length_mm: req.body.length_mm ? parseFloat(req.body.length_mm) : null,
+            width_mm: req.body.width_mm ? parseFloat(req.body.width_mm) : null,
+            thickness_mm: req.body.thickness_mm ? parseFloat(req.body.thickness_mm) : null,
+            weight_g: req.body.weight_g ? parseInt(req.body.weight_g, 10) : null,
+            display_size: req.body.display_size ? parseFloat(req.body.display_size) : null,
+            resolution: req.body.resolution || null,
+            pixel_density: req.body.pixel_density ? parseInt(req.body.pixel_density, 10) : null,
+            refresh_rate: req.body.refresh_rate || null,
+            brightness: req.body.brightness || null,
+            display_features: req.body.display_features || null,
+            rear_camera_main: req.body.rear_camera_main || null,
+            rear_camera_macro: req.body.rear_camera_macro || null,
+            rear_camera_features: req.body.rear_camera_features || null,
+            rear_video_resolution: req.body.rear_video_resolution || null,
+            front_camera: req.body.front_camera || null,
+            front_camera_features: req.body.front_camera_features || null,
+            front_video_resolution: req.body.front_video_resolution || null,
+            battery_capacity: req.body.battery_capacity ? parseInt(req.body.battery_capacity, 10) : null,
+            fast_charging: req.body.fast_charging || null,
+            connector: req.body.connector || null,
+            security_features: req.body.security_features || null,
+            sim_card: req.body.sim_card || null,
+            nfc: req.body.nfc || null,
+            network_bands: req.body.network_bands || null,
+            wireless_connectivity: req.body.wireless_connectivity || null,
+            navigation: req.body.navigation || null,
+            audio_jack: req.body.audio_jack || null,
+            audio_playback: req.body.audio_playback || null,
+            video_playback: req.body.video_playback || null,
+            sensors: req.body.sensors || null,
+            operating_system: req.body.operating_system || null,
+            package_contents: req.body.package_contents || null
+        };
+
+        // Remove any undefined values
+        Object.keys(productData).forEach(key => 
+            productData[key] === undefined && delete productData[key]
+        );
+
+        if (action === 'add') {
+            // Create the INSERT query dynamically
+            const fields = Object.keys(productData);
+            const placeholders = fields.map(() => '?').join(', ');
+            const values = fields.map(field => productData[field]);
+            
+            const query = `INSERT INTO phone_specs (${fields.join(', ')}) VALUES (${placeholders})`;
+            
+            const [result] = await req.db.execute(query, values);
+            
+            if (result.affectedRows !== 1) {
+                throw new Error('Failed to add product');
+            }
+
+        } else if (action === 'update') {
+            if (!id) {
+                return res.status(400).json({ error: 'Product ID is required for update' });
+            }
+
+            // Create the UPDATE query dynamically
+            const setClause = Object.keys(productData)
+                .map(field => `${field} = ?`)
+                .join(', ');
+            const values = [...Object.values(productData), id];
+            
+            const query = `UPDATE phone_specs SET ${setClause} WHERE id = ?`;
+            
+            const [result] = await req.db.execute(query, values);
+
+            if (result.affectedRows !== 1) {
+                return res.status(404).json({ error: 'Product not found' });
+            }
+        } else {
+            return res.status(400).json({ error: 'Invalid action specified' });
+        }
+
+        res.redirect('/products');
+
     } catch (error) {
         console.error('Error during product management:', error);
-        next(error);
+        // Send a more specific error message
+        res.status(500).json({ 
+            error: 'Database operation failed', 
+            details: error.message 
+        });
     }
 });
 
