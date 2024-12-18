@@ -100,17 +100,37 @@
     <table>
       <thead>
         <tr>
-          <th>Order Date</th>
           <th>Product Name</th>
           <th>Price</th>
+          <th>Email</th>
+          <th>Phone number</th>
+          <th>Address</th>
+          <th>Phone name</th>
+          <th>Phone maker</th>
+          <th>Subbrand</th>
+          <th>Price</th>
+          <th>Color</th>
+          <th>RAM</th>
+          <th>ROM</th>
+          <th>Order Date</th>
         </tr>
       </thead>
       <tbody>
         <% orders.forEach(order => { %>
           <tr>
-            <td><%= order.order_date %></td>
+            <td><%= order.first_name %></td>
+            <td><%= order.last_name %></td>
+            <td><%= order.email %></td>
+            <td><%= order.phone_number %></td>
+            <td><%= order.street_address %></td>
             <td><%= order.sm_name %></td>
+            <td><%= order.sm_maker %></td>
+            <td><%= order.subbrand %></td>
             <td><%= order.sm_price %></td>
+            <td><%= order.color %></td>
+            <td><%= order.ram %></td>
+            <td><%= order.rom %></td>
+            <td><%= order.order_date %></td>
           </tr>
         <% }); %>
       </tbody>
