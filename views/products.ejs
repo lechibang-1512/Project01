@@ -18,14 +18,73 @@
 
     <div class="container">
         <h1 class="text-center">All Products</h1>
+        
+        <!-- Filters Section -->
+        <div class="filters">
+            <form method="GET" action="/products" id="filterForm">
+                <div class="filter">
+                    <label for="brand">Brand:</label>
+                    <select name="brand" id="brand" onchange="this.form.submit()">
+                        <option value="">All Brands</option>
+                        <% brands.forEach(function(brand) { %>
+                            <option value="<%= brand.sm_maker %>" 
+                                    <%= selectedBrand === brand.sm_maker ? 'selected' : '' %>>
+                                <%= brand.sm_maker %>
+                            </option>
+                        <% }); %>
+                    </select>
+                </div>
+                
+                <div class="filter">
+                    <label for="subbrand">Sub-brand:</label>
+                    <select name="subbrand" id="subbrand" onchange="this.form.submit()">
+                        <option value="">All Sub-brands</option>
+                        <% subbrands.forEach(function(subbrand) { %>
+                            <option value="<%= subbrand.subbrand %>"
+                                    <%= selectedSubbrand === subbrand.subbrand ? 'selected' : '' %>>
+                                <%= subbrand.subbrand %>
+                            </option>
+                        <% }); %>
+                    </select>
+                </div>
+                
+                <div class="filter">
+                    <label for="model">Model:</label>
+                    <select name="model" id="model" onchange="this.form.submit()">
+                        <option value="">All Models</option>
+                        <% models.forEach(function(model) { %>
+                            <option value="<%= model.sm_name %>"
+                                    <%= selectedModel === model.sm_name ? 'selected' : '' %>>
+                                <%= model.sm_name %>
+                            </option>
+                        <% }); %>
+                    </select>
+                </div>
+            </form>
+        </div>
+
+        <!-- No Results Message -->
+        <% if (products.length === 0) { %>
+            <div class="no-results">
+                <p>No products found matching your criteria.</p>
+            </div>
+        <% } %>
+
+        <!-- Products List -->
         <div class="product-container">
             <% products.forEach(function(product) { %>
                 <div class="product-card">
-                    <img src="<%= product.image_url %>" alt="<%= product.sm_name %>" class="product-image"> <!-- Added image field -->
-                    <h2 class="product-name"><%= product.sm_name %></h2>
-                    <p class="product-maker">Maker: <%= product.sm_maker %></p>
-                    <p class="product-price">Price: $<%= product.sm_price %></p> <!-- Added price field -->
-                    <a class="product-link" href="/product/<%= product.id %>">View Details</a>
+                    <img src="<%= product.image_url || '/images/placeholder.png' %>" 
+                         alt="<%= product.sm_name %>" 
+                         class="product-image">
+                    <div class="product-info">
+                        <h2 class="product-name"><%= product.sm_name %></h2>
+                        <p class="product-maker">Brand: <%= product.sm_maker %></p>
+                        <p class="product-subbrand">Sub-brand: <%= product.subbrand || 'N/A' %></p>
+                        <p class="product-price">Price: $<%= product.sm_price.toFixed(2) %></p>
+                        <p class="product-inventory">In Stock: <%= product.sm_inventory %></p>
+                        <a class="product-link" href="/product/<%= product.id %>">View Details</a>
+                    </div>
                 </div>
             <% }); %>
         </div>
@@ -34,8 +93,15 @@
     <script>
         function toggleMenu() {
             const menu = document.getElementById('menu');
-            menu.classList.toggle('hidden'); // Using the hidden class for toggle
+            menu.classList.toggle('hidden');
         }
+
+        // Add event listener for filter changes
+        document.querySelectorAll('.filter select').forEach(select => {
+            select.addEventListener('change', function() {
+                document.getElementById('filterForm').submit();
+            });
+        });
     </script>
 </body>
 </html>

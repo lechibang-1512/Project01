@@ -1,222 +1,116 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Product Details</title>
-  <link rel="stylesheet" href="styles.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= product.sm_name %> - Details</title>
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <div class="container">
-    <div class="button-container">
-      <a class="product-link" href="/">Back to All Products</a>
+    <div class="menu-container">
+        <button class="hamburger" onclick="toggleMenu()">☰</button> 
+        <nav id="menu" class="hidden">
+            <a href="/products">Products</a>
+            <a href="/purchaseHistory">Purchase History</a>
+            <a href="/customerInfo">Customer Info</a>
+        </nav>
     </div>
-    <h1 class="text-center">Product Details</h1>
-    <div class="product-card">
-      <h2 class="product-name"><%= product.sm_name %></h2>
-      <p class="product-maker">Maker: <%= product.sm_maker %></p>
-      <div class="specs-container">
-        <div class="specs-header" onclick="toggleSpecs()">Specifications</div>
-        <div class="specs-content hidden">
-          <table>
-            <thead>
-              <tr>
-                <th>Feature</th>
-                <th>Details</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>Inventory</td>
-                <td><%= product.sm_price %></td>
-              </tr>
-              <tr>
-                <td>Inventory</td>
-                <td><%= product.sm_inventory %></td>
-              </tr>
-              <tr>
-                <td>Color</td>
-                <td><%= product.color %></td>
-              </tr>
-              <tr>
-                <td>Processor</td>
-                <td><%= product.processor %></td>
-              </tr>
-              <tr>
-                <td>Memory</td>
-                <td><%= product.ram %> RAM, <%= product.rom %> ROM</td>
-              </tr>
-              <tr>
-                <td>Battery Capacity</td>
-                <td><%= product.battery_capacity %> mAh</td>
-              </tr>
-              <tr>
-                <td>Water and Dust Rating</td>
-                <td><%= product.water_and_dust_rating %></td>
-              </tr>
-              <tr>
-                <td>Sub-brand</td>
-                <td><%= product.subbrand %></td>
-              </tr>
-              <tr>
-                <td>Process Node</td>
-                <td><%= product.process_node %></td>
-              </tr>
-              <tr>
-                <td>CPU Cores</td>
-                <td><%= product.cpu_cores %></td>
-              </tr>
-              <tr>
-                <td>CPU Frequency</td>
-                <td><%= product.cpu_frequency %></td>
-              </tr>
-              <tr>
-                <td>GPU</td>
-                <td><%= product.gpu %></td>
-              </tr>
-              <tr>
-                <td>Memory Type</td>
-                <td><%= product.memory_type %></td>
-              </tr>
-              <tr>
-                <td>Expandable Memory</td>
-                <td><%= product.expandable_memory %></td>
-              </tr>
-              <tr>
-                <td>Length (mm)</td>
-                <td><%= product.length_mm %></td>
-              </tr>
-              <tr>
-                <td>Width (mm)</td>
-                <td><%= product.width_mm %></td>
-              </tr>
-              <tr>
-                <td>Thickness (mm)</td>
-                <td><%= product.thickness_mm %></td>
-              </tr>
-              <tr>
-                <td>Weight (g)</td>
-                <td><%= product.weight_g %></td>
-              </tr>
-              <tr>
-                <td>Display Size</td>
-                <td><%= product.display_size %></td>
-              </tr>
-              <tr>
-                <td>Resolution</td>
-                <td><%= product.resolution %></td>
-              </tr>
-              <tr>
-                <td>Pixel Density</td>
-                <td><%= product.pixel_density %></td>
-              </tr>
-              <tr>
-                <td>Refresh Rate</td>
-                <td><%= product.refresh_rate %></td>
-              </tr>
-              <tr>
-                <td>Brightness</td>
-                <td><%= product.brightness %></td>
-              </tr>
-              <tr>
-                <td>Display Features</td>
-                <td><%= product.display_features %></td>
-              </tr>
-              <tr>
-                <td>Rear Camera Main</td>
-                <td><%= product.rear_camera_main %></td>
-              </tr>
-              <tr>
-                <td>Rear Camera Macro</td>
-                <td><%= product.rear_camera_macro %></td>
-              </tr>
-              <tr>
-                <td>Rear Camera Features</td>
-                <td><%= product.rear_camera_features %></td>
-              </tr>
-              <tr>
-                <td>Rear Video Resolution</td>
-                <td><%= product.rear_video_resolution %></td>
-              </tr>
-              <tr>
-                <td>Front Camera</td>
-                <td><%= product.front_camera %></td>
-              </tr>
-              <tr>
-                <td>Front Camera Features</td>
-                <td><%= product.front_camera_features %></td>
-              </tr>
-              <tr>
-                <td>Front Video Resolution</td>
-                <td><%= product.front_video_resolution %></td>
-              </tr>
-              <tr>
-                <td>Fast Charging</td>
-                <td><%= product.fast_charging %></td>
-              </tr>
-              <tr>
-                <td>Connector</td>
-                <td><%= product.connector %></td>
-              </tr>
-              <tr>
-                <td>Security Features</td>
-                <td><%= product.security_features %></td>
-              </tr>
-              <tr>
-                <td>SIM Card</td>
-                <td><%= product.sim_card %></td>
-              </tr>
-              <tr>
-                <td>NFC</td>
-                <td><%= product.nfc %></td>
-              </tr>
-              <tr>
-                <td>Network Bands</td>
-                <td><%= product.network_bands %></td>
-              </tr>
-              <tr>
-                <td>Wireless Connectivity</td>
-                <td><%= product.wireless_connectivity %></td>
-              </tr>
-              <tr>
-                <td>Navigation</td>
-                <td><%= product.navigation %></td>
-              </tr>
-              <tr>
-                <td>Audio Jack</td>
-                <td><%= product.audio_jack %></td>
-              </tr>
-              <tr>
-                <td>Audio Playback</td>
-                <td><%= product.audio_playback %></td>
-              </tr>
-              <tr>
-                <td>Video Playback</td>
-                <td><%= product.video_playback %></td>
-              </tr>
-              <tr>
-                <td>Sensors</td>
-                <td><%= product.sensors %></td>
-              </tr>
-              <tr>
-                <td>Operating System</td>
-                <td><%= product.operating_system %></td>
-              </tr>
-              <tr>
-                <td>Package Contents</td>
-                <td><%= product.package_contents %></td>
-              </tr>
-            </tbody>
-          </table>
+
+    <div class="container">
+        <div class="product-details">
+            <div class="product-header">
+                <h1><%= product.sm_name %></h1>
+                <a href="/products" class="back-link">← Back to Products</a>
+            </div>
+
+            <div class="product-content">
+                <div class="product-image-section">
+                    <img src="<%= product.image_url || '/images/placeholder.png' %>" 
+                         alt="<%= product.sm_name %>" 
+                         class="product-detail-image">
+                </div>
+
+                <div class="product-info-section">
+                    <div class="basic-info">
+                        <h2>Basic Information</h2>
+                        <p><strong>Brand:</strong> <%= product.sm_maker %></p>
+                        <p><strong>Sub-brand:</strong> <%= product.subbrand || 'N/A' %></p>
+                        <p><strong>Price:</strong> $<%= product.sm_price.toFixed(2) %></p>
+                        <p><strong>Availability:</strong> <%= product.sm_inventory > 0 ? 'In Stock' : 'Out of Stock' %></p>
+                        <p><strong>Color:</strong> <%= product.color || 'N/A' %></p>
+                    </div>
+
+                    <div class="specifications">
+                        <h2>Technical Specifications</h2>
+                        
+                        <h3>Performance</h3>
+                        <p><strong>Processor:</strong> <%= product.processor || 'N/A' %></p>
+                        <p><strong>Process Node:</strong> <%= product.process_node || 'N/A' %></p>
+                        <p><strong>CPU Cores:</strong> <%= product.cpu_cores || 'N/A' %></p>
+                        <p><strong>CPU Frequency:</strong> <%= product.cpu_frequency || 'N/A' %></p>
+                        <p><strong>GPU:</strong> <%= product.gpu || 'N/A' %></p>
+
+                        <h3>Memory</h3>
+                        <p><strong>Memory Type:</strong> <%= product.memory_type || 'N/A' %></p>
+                        <p><strong>RAM:</strong> <%= product.ram || 'N/A' %></p>
+                        <p><strong>ROM:</strong> <%= product.rom || 'N/A' %></p>
+                        <p><strong>Expandable Memory:</strong> <%= product.expandable_memory || 'N/A' %></p>
+
+                        <h3>Physical Specifications</h3>
+                        <p><strong>Dimensions:</strong> <%= product.length_mm || 'N/A' %> x <%= product.width_mm || 'N/A' %> x <%= product.thickness_mm || 'N/A' %> mm</p>
+                        <p><strong>Weight:</strong> <%= product.weight_g || 'N/A' %> g</p>
+                        <p><strong>Water/Dust Rating:</strong> <%= product.water_and_dust_rating || 'N/A' %></p>
+
+                        <h3>Display</h3>
+                        <p><strong>Size:</strong> <%= product.display_size || 'N/A' %></p>
+                        <p><strong>Resolution:</strong> <%= product.resolution || 'N/A' %></p>
+                        <p><strong>Pixel Density:</strong> <%= product.pixel_density || 'N/A' %></p>
+                        <p><strong>Refresh Rate:</strong> <%= product.refresh_rate || 'N/A' %></p>
+                        <p><strong>Brightness:</strong> <%= product.brightness || 'N/A' %></p>
+                        <p><strong>Display Features:</strong> <%= product.display_features || 'N/A' %></p>
+
+                        <h3>Camera</h3>
+                        <p><strong>Main Camera:</strong> <%= product.rear_camera_main || 'N/A' %></p>
+                        <p><strong>Macro Camera:</strong> <%= product.rear_camera_macro || 'N/A' %></p>
+                        <p><strong>Camera Features:</strong> <%= product.rear_camera_features || 'N/A' %></p>
+                        <p><strong>Video Resolution:</strong> <%= product.rear_video_resolution || 'N/A' %></p>
+                        <p><strong>Front Camera:</strong> <%= product.front_camera || 'N/A' %></p>
+                        <p><strong>Front Camera Features:</strong> <%= product.front_camera_features || 'N/A' %></p>
+                        <p><strong>Front Video Resolution:</strong> <%= product.front_video_resolution || 'N/A' %></p>
+
+                        <h3>Battery & Charging</h3>
+                        <p><strong>Battery Capacity:</strong> <%= product.battery_capacity || 'N/A' %></p>
+                        <p><strong>Fast Charging:</strong> <%= product.fast_charging || 'N/A' %></p>
+                        <p><strong>Connector Type:</strong> <%= product.connector || 'N/A' %></p>
+
+                        <h3>Additional Features</h3>
+                        <p><strong>Security Features:</strong> <%= product.security_features || 'N/A' %></p>
+                        <p><strong>SIM Card:</strong> <%= product.sim_card || 'N/A' %></p>
+                        <p><strong>NFC:</strong> <%= product.nfc || 'N/A' %></p>
+                        <p><strong>Network Bands:</strong> <%= product.network_bands || 'N/A' %></p>
+                        <p><strong>Wireless Connectivity:</strong> <%= product.wireless_connectivity || 'N/A' %></p>
+                        <p><strong>Navigation:</strong> <%= product.navigation || 'N/A' %></p>
+                        <p><strong>Audio Jack:</strong> <%= product.audio_jack || 'N/A' %></p>
+                        <p><strong>Audio Playback:</strong> <%= product.audio_playback || 'N/A' %></p>
+                        <p><strong>Video Playback:</strong> <%= product.video_playback || 'N/A' %></p>
+                        <p><strong>Sensors:</strong> <%= product.sensors || 'N/A' %></p>
+
+                        <h3>Software</h3>
+                        <p><strong>Operating System:</strong> <%= product.operating_system || 'N/A' %></p>
+
+                        <h3>Package Contents</h3>
+                        <p><%= product.package_contents || 'N/A' %></p>
+                    </div>
+                </div>
+            </div>
         </div>
-      </div>
     </div>
-  </div>
-  <script>
-    function toggleSpecs() {
-      const specsContent = document.querySelector('.specs-content');
-      specsContent.classList.toggle('hidden');
-    }
-  </script>
+
+    <script>
+        function toggleMenu() {
+            const menu = document.getElementById('menu');
+            menu.classList.toggle('hidden');
+        }
+    </script>
 </body>
 </html>
