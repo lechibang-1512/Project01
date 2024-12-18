@@ -8,21 +8,23 @@
 </head>
 <body>
     <div class="menu-container">
-      <button class="hamburger" onclick="toggleMenu()">☰</button> 
-      <nav id="menu" class="hidden">
-      <a href="/products">Products</a>
-      <a href="/purchaseHistory">Purchase History</a>
-      <a href="/customerInfo">Customer Info</a>
-    </nav>
-  </div>
+        <button class="hamburger" onclick="toggleMenu()">☰</button> 
+        <nav id="menu" class="hidden">
+            <a href="/products">Products</a>
+            <a href="/purchaseHistory">Purchase History</a>
+            <a href="/customerInfo">Customer Info</a>
+        </nav>
+    </div>
 
     <div class="container">
         <h1 class="text-center">All Products</h1>
         <div class="product-container">
             <% products.forEach(function(product) { %>
                 <div class="product-card">
+                    <img src="<%= product.image_url %>" alt="<%= product.sm_name %>" class="product-image"> <!-- Added image field -->
                     <h2 class="product-name"><%= product.sm_name %></h2>
                     <p class="product-maker">Maker: <%= product.sm_maker %></p>
+                    <p class="product-price">Price: $<%= product.sm_price %></p> <!-- Added price field -->
                     <a class="product-link" href="/product/<%= product.id %>">View Details</a>
                 </div>
             <% }); %>
@@ -30,10 +32,10 @@
     </div>
 
     <script>
-      function toggleMenu() {
-        const menu = document.getElementById('menu');
-        menu.classList.toggle('hidden'); // Using the hidden class for toggle
-      }
+        function toggleMenu() {
+            const menu = document.getElementById('menu');
+            menu.classList.toggle('hidden'); // Using the hidden class for toggle
+        }
     </script>
 </body>
 </html>
