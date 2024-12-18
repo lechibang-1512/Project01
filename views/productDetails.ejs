@@ -7,20 +7,11 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <div class="menu-container">
-        <button class="hamburger" onclick="toggleMenu()">☰</button> 
-        <nav id="menu" class="hidden">
-            <a href="/products">Products</a>
-            <a href="/purchaseHistory">Purchase History</a>
-            <a href="/customerInfo">Customer Info</a>
-        </nav>
-    </div>
-
     <div class="container">
         <div class="product-details">
             <div class="product-header">
                 <h1><%= product.sm_name %></h1>
-                <a href="/products" class="back-link">← Back to Products</a>
+                 <button onclick="window.location.href='/products'" class="back-button">← Back to Products</button>
             </div>
 
             <div class="product-content">
@@ -105,12 +96,5 @@
             </div>
         </div>
     </div>
-
-    <script>
-        function toggleMenu() {
-            const menu = document.getElementById('menu');
-            menu.classList.toggle('hidden');
-        }
-    </script>
 </body>
 </html>

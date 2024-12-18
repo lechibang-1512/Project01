@@ -138,9 +138,26 @@ app.get('/product/:id', async (req, res, next) => {
 // Purchase History route
 app.get('/purchaseHistory', async (req, res, next) => {
     try {
-        const [orders] = await req.db.execute(
-            'SELECT * FROM customer_data.order_details ORDER BY order_date DESC'
-        );
+        const [orders] = await req.db.execute(`
+            SELECT 
+                c.first_name,
+                c.last_name,
+                c.email,
+                c.phone_number,
+                c.street_address,
+                ps.sm_name,
+                ps.sm_maker,
+                ps.subbrand,
+                ps.sm_price,
+                ps.color,
+                ps.ram,
+                ps.rom,
+                od.order_date
+            FROM customer_data.order_details od
+            JOIN master_specs_db.phone_specs ps ON od.phone_id = ps.id
+            JOIN customer_data.customer_info c ON od.customer_id = c.customer_id
+            ORDER BY od.order_date DESC
+        `);
         res.render('purchaseHistory', { orders });
     } catch (error) {
         console.error('Error fetching purchase history:', error);
