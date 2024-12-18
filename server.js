@@ -3,7 +3,6 @@ const express = require('express');
 const mysql = require('mysql2');
 const path = require('path');
 const bodyParser = require('body-parser');
-const session = require('express-session');
 
 const app = express();
 
@@ -13,18 +12,6 @@ app.set('views', path.join(__dirname, 'views'));
 
 // Serve static files
 app.use(express.static(path.join(__dirname, 'public')));
-
-// Middleware
-app.use(bodyParser.urlencoded({ extended: false }));
-app.use(session({
-  secret: '12345', // Change to a strong secret in production
-  resave: false,
-  saveUninitialized: false,
-  cookie: {
-    secure: false, // Set to `true` if using HTTPS
-    maxAge: 24 * 60 * 60 * 1000, // 1 day
-  }
-}));
 
 // MySQL connection pool
 const pool = mysql.createPool({
@@ -90,43 +77,41 @@ app.get('/contactUs', (req, res) => {
   res.render('contactUs');
 });
 
-// Cart functionality
-app.get('/cart', (req, res) => {
-  const cart = req.session.cart || [];
-  res.render('myCart', { cart });
-});
-
-app.post('/add-to-cart', async (req, res) => {
-  const productId = req.body.productId;
+// Purchase History page
+app.get('/purchaseHistory', async (req, res, next) => {
   try {
-    const [product] = await req.db.execute('SELECT * FROM phone_specs WHERE id = ?', [productId]);
-    if (product.length === 0) return res.status(404).send('Product not found');
-
-    const cart = req.session.cart || [];
-    const existingProductIndex = cart.findIndex(item => item.id === productId);
-
-    if (existingProductIndex !== -1) {
-      cart[existingProductIndex].quantity++;
-    } else {
-      const productWithQuantity = { ...product[0], quantity: 1 };
-      cart.push(productWithQuantity);
-    }
-
-    req.session.cart = cart;
-    res.redirect('/cart');
-  } catch (err) {
-    console.error('Error adding product to cart:', err);
-    res.status(500).send('Error adding product to cart');
+    const [results] = await req.db.execute('SELECT * FROM customer_data.order_details'); // Query all order details
+    res.render('purchaseHistory', { orders: results });
+  } catch (error) {
+    console.error('Error fetching purchase history:', error);
+    next(error);  // Pass the error to the error handling middleware
   }
 });
 
-app.post('/remove-from-cart', (req, res) => {
-  const productId = req.body.productId;
-  let cart = req.session.cart || [];
-  cart = cart.filter(item => item.id.toString() !== productId);
-  req.session.cart = cart;
-  res.redirect('/cart');
+// Customer Info page
+app.get('/customerInfo', async (req, res, next) => {
+  try {
+
+    // Check if customer ID is provided
+      const customerId = req.query.customerId; 
+     let query = 'SELECT * FROM customer_data.customer_info'; // Default: show all customers
+
+        let params= [];
+        if (customerId) {
+         query = 'SELECT * FROM customer_data.customer_info WHERE customer_id = ?';
+         params = [customerId]  
+        }
+
+
+      const [results] = await req.db.execute(query, params);
+      res.render('customerInfo', { customers: results });
+
+  } catch (error) {
+    console.error('Error fetching customer info:', error);
+    next(error); 
+  }
 });
+
 
 // Error handling middleware
 app.use((err, req, res, next) => {
