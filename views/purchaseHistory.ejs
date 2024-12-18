@@ -1,143 +1,73 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Purchase History</title>
-  <link rel="stylesheet" href="/styles.css">
-  <style>
-    /* General styles */
-    body {
-      font-family: Arial, sans-serif;
-      margin: 0;
-      padding: 0;
-    }
-
-    .menu-container {
-      position: relative;
-      margin: 10px;
-    }
-
-    .hamburger {
-      font-size: 24px;
-      cursor: pointer;
-      background-color: #007BFF;
-      color: white;
-      border: none;
-      padding: 10px 15px;
-      border-radius: 5px;
-    }
-
-    nav {
-      position: absolute;
-      top: 50px;
-      left: 0;
-      background-color: #f9f9f9;
-      border: 1px solid #ddd;
-      border-radius: 5px;
-      display: none; /* Initially hidden */
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-      z-index: 1000; /* Ensure it appears above other content */
-    }
-
-    nav a {
-      display: block;
-      padding: 10px 15px;
-      color: #333;
-      text-decoration: none;
-    }
-
-    nav a:hover {
-      background-color: #007BFF;
-      color: white;
-    }
-
-    nav.visible {
-      display: block;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 20px;
-    }
-
-    table th, table td {
-      border: 1px solid #ddd;
-      padding: 10px;
-      text-align: left;
-    }
-
-    table th {
-      background-color: #f4f4f4;
-    }
-
-    a {
-      text-decoration: none;
-      color: #007BFF;
-    }
-
-    a:hover {
-      text-decoration: underline;
-    }
-  </style>
-  <script>
-    function toggleMenu() {
-      const menu = document.getElementById('menu');
-      menu.classList.toggle('visible');
-    }
-  </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Purchase History</title>
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <div class="menu-container">
-    <button class="hamburger" onclick="toggleMenu()">☰</button>
-    <nav id="menu" class="hidden">
-      <a href="/products">Products</a>
-      <a href="/cart">My Cart</a>
-      <a href="/purchaseHistory">Purchase History</a>
-    </nav>
-  </div>
+    <div class="menu-container">
+        <button class="hamburger" onclick="toggleMenu()">☰</button>
+        <nav id="menu" class="hidden">
+            <a href="/products">Products</a>
+            <a href="/customerInfo">Customers list</a>
+            <a href="/purchaseHistory">Purchase History</a>
+        </nav>
+    </div>
 
-  <% if (orders && orders.length > 0) { %>
-    <table>
-      <thead>
-        <tr>
-          <th>Product Name</th>
-          <th>Price</th>
-          <th>Email</th>
-          <th>Phone number</th>
-          <th>Address</th>
-          <th>Phone name</th>
-          <th>Phone maker</th>
-          <th>Subbrand</th>
-          <th>Price</th>
-          <th>Color</th>
-          <th>RAM</th>
-          <th>ROM</th>
-          <th>Order Date</th>
-        </tr>
-      </thead>
-      <tbody>
-        <% orders.forEach(order => { %>
-          <tr>
-            <td><%= order.first_name %></td>
-            <td><%= order.last_name %></td>
-            <td><%= order.email %></td>
-            <td><%= order.phone_number %></td>
-            <td><%= order.street_address %></td>
-            <td><%= order.sm_name %></td>
-            <td><%= order.sm_maker %></td>
-            <td><%= order.subbrand %></td>
-            <td><%= order.sm_price %></td>
-            <td><%= order.color %></td>
-            <td><%= order.ram %></td>
-            <td><%= order.rom %></td>
-            <td><%= order.order_date %></td>
-          </tr>
-        <% }); %>
-      </tbody>
-    </table>
-  <% } else { %>
-    <p>No purchase history found.</p>
-  <% } %>
-  <a href="/">Back to Home</a>
+    <div class="container">
+        <h1 class="text-center">Purchase History</h1>
+        <% if (orders && orders.length > 0) { %>
+            <table>
+                <thead>
+                    <tr>
+                        <th>First Name</th>
+                        <th>Last Name</th>
+                        <th>Email</th>
+                        <th>Phone Number</th>
+                        <th>Address</th>
+                        <th>Phone Model</th>
+                        <th>Manufacturer</th>
+                        <th>Sub-brand</th>
+                        <th>Price (USD)</th>
+                        <th>Color</th>
+                        <th>RAM (GB)</th>
+                        <th>Storage (ROM) (GB)</th>
+                        <th>Order Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% orders.forEach(order => { %>
+                        <tr>
+                            <td><%= order.first_name %></td>
+                            <td><%= order.last_name %></td>
+                            <td><%= order.email %></td>
+                            <td><%= order.phone_number %></td>
+                            <td><%= order.street_address %></td>
+                            <td><%= order.sm_name %></td>
+                            <td><%= order.sm_maker %></td>
+                            <td><%= order.subbrand %></td>
+                            <td><%= order.sm_price %></td>
+                            <td><%= order.color %></td>
+                            <td><%= order.ram %></td>
+                            <td><%= order.rom %></td>
+                            <td><%= order.order_date %></td>
+                        </tr>
+                    <% }); %>
+                </tbody>
+            </table>
+        <% } else { %>
+            <p>No purchase history found.</p>
+        <% } %>
+        <a class="product-link" href="/">Back to Home</a>
+    </div>
+
+    <script>
+        function toggleMenu() {
+            const menu = document.getElementById('menu');
+            menu.classList.toggle('hidden');
+        }
+    </script>
 </body>
 </html>
