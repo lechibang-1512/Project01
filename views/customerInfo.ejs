@@ -108,7 +108,11 @@
           <th>Last Name</th>
           <th>Email</th>
           <th>Phone Number</th>
-          <!-- Add other customer details as needed -->
+          <th>Street Address</th>
+          <th>City</th>
+          <th>State</th>
+          <th>Postal Code</th>
+          <th>Country</th>
         </tr>
       </thead>
       <tbody>
@@ -119,7 +123,11 @@
             <td><%= customer.last_name %></td>
             <td><%= customer.email %></td>
             <td><%= customer.phone_number %></td>
-            <!-- Display other customer details -->
+            <td><%= customer.street_address %></td>
+            <td><%= customer.city %></td>
+            <td><%= customer.state %></td>
+            <td><%= customer.postal_code %></td>
+            <td><%= customer.country %></td>
           </tr>
         <% }); %>
       </tbody>
