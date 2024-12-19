@@ -45,6 +45,8 @@ app.use(async (req, res, next) => {
 });
 
 
+
+
 // --- Route Handlers ---
 
 // Error handling Middleware
@@ -55,6 +57,22 @@ app.use((err, req, res, next) => {
          errorDetails: err.message  // Include the error message in the rendered view
     });
 });
+
+// Homepage Route
+app.get('/', (req, res) => {
+    if (!auth.isAuthenticated(req)) {
+      return res.redirect('/admin/login');
+    }
+     res.render('homepage');
+  });
+  
+  
+  app.get('/homepage', (req, res) => {
+      if (!auth.isAuthenticated(req)) {
+           return res.redirect('/admin/login');
+      }
+      res.render('homepage');
+  });
 
 // Helper function for database queries and perf measuring.
 async function queryDatabase(db, sql, params = []) {
