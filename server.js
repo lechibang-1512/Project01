@@ -3,7 +3,9 @@ const mysql = require('mysql2/promise'); // Using promise-based API
 const path = require('path');
 const bodyParser = require('body-parser');
 const { performance } = require('perf_hooks'); // for performance metrics
+const auth = require('./auth'); // Import authentication logic
 const app = express();
+
 
 // --- Configuration ---
 const PORT = process.env.PORT || 3000;
@@ -23,10 +25,11 @@ app.set('views', path.join(__dirname, 'views'));
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
+app.use(auth.sessionMiddleware) // Add express-session middleware
+
 
 // --- Database Connection Pool ---
 const pool = mysql.createPool(DB_CONFIG);
-
 
 // Database Connection Middleware (Optimized)
 app.use(async (req, res, next) => {
@@ -53,7 +56,6 @@ app.use((err, req, res, next) => {
     });
 });
 
-
 // Helper function for database queries and perf measuring.
 async function queryDatabase(db, sql, params = []) {
     const startTime = performance.now();
@@ -67,13 +69,47 @@ async function queryDatabase(db, sql, params = []) {
          throw error;  // Re-throw error to be handled by the route
     }
 }
-// Homepage Route
+
+
+// Admin login route (show first)
+app.get('/admin/login', (req, res) => {
+    if (auth.isAuthenticated(req)) { // If user is already authenticated, redirect
+        return res.redirect('/products');
+    }
+    res.render('adminLogin', { error: null });
+});
+
+
+// Admin login POST route
+app.post('/admin/login', (req, res) => {
+    const { username, password } = req.body;
+    if (auth.loginAdmin(req, username, password)) {
+        return res.redirect('/products'); // Redirect to product page if login is successful.
+    } else {
+       return res.render('adminLogin', { error: 'Invalid username or password' }); // Show error if login fails
+    }
+});
+
+
+app.get('/admin/logout', (req, res) => {
+     auth.logoutAdmin(req);
+     res.redirect('/admin/login'); // Redirect to login page after logout.
+});
+
+
+// Homepage Route (redirect if not authenticated)
 app.get('/', (req, res) => {
-    res.render('homepage');
+    if (!auth.isAuthenticated(req)) {
+         return res.redirect('/admin/login');
+    }
+     res.render('homepage'); //Show homepage if authenticated
 });
 
 // Products Route with Filtering
 app.get('/products', async (req, res, next) => {
+     if(!auth.isAuthenticated(req)){
+        return res.redirect('/admin/login');
+    }
     const { brand, subbrand, model } = req.query;
     try {
       // Fetch filter options
@@ -141,6 +177,9 @@ app.get('/products', async (req, res, next) => {
 
 // Single Product Details Route
 app.get('/product/:id', async (req, res, next) => {
+     if(!auth.isAuthenticated(req)){
+        return res.redirect('/admin/login');
+    }
     try {
         const product = await queryDatabase(req.db,'SELECT * FROM phone_specs WHERE id = ?', [req.params.id])
 
@@ -157,6 +196,9 @@ app.get('/product/:id', async (req, res, next) => {
 
 // Purchase History Route
 app.get('/purchaseHistory', async (req, res, next) => {
+     if(!auth.isAuthenticated(req)){
+        return res.redirect('/admin/login');
+    }
     try {
            const orders =  await queryDatabase(req.db,`
             SELECT
@@ -252,6 +294,9 @@ app.get('/purchaseHistory', async (req, res, next) => {
 
 // Customer Info Route
 app.get('/customerInfo', async (req, res, next) => {
+     if(!auth.isAuthenticated(req)){
+        return res.redirect('/admin/login');
+    }
     try {
          const { customerId } = req.query;
         let query = 'SELECT * FROM customer_data.customer_info';
@@ -276,36 +321,39 @@ app.get('/customerInfo', async (req, res, next) => {
 
 // Product Management Route (CRUD)
 app.post('/products/manage', async (req, res, next) => {
+     if(!auth.isAuthenticated(req)){
+        return res.redirect('/admin/login');
+    }
     try {
-         // Validate that action exists
-        if (!req.body.action) {
-           return res.status(400).json({ error: 'Action is required' });
-        }
-
-        const { action, id } = req.body;
-
-            // For delete operation, we only need the id
-        if (action === 'delete') {
-            if (!id) {
-               return res.status(400).json({ error: 'Product ID is required for deletion' });
-           }
-
-            const result =  await queryDatabase(req.db,'DELETE FROM phone_specs WHERE id = ?', [id])
-              if (!result.affectedRows === 1) {
-                return res.status(404).json({ error: 'Product not found' });
+           // Validate that action exists
+         if (!req.body.action) {
+                return res.status(400).json({ error: 'Action is required' });
             }
 
+            const { action, id } = req.body;
+
+            // For delete operation, we only need the id
+            if (action === 'delete') {
+                if (!id) {
+                    return res.status(400).json({ error: 'Product ID is required for deletion' });
+                }
+
+            const result =  await queryDatabase(req.db,'DELETE FROM phone_specs WHERE id = ?', [id])
+             if (!result.affectedRows === 1) {
+                 return res.status(404).json({ error: 'Product not found' });
+             }
+
             return res.redirect('/products');
-         }
+           }
 
 
          // For add and update operations, validate required fields
          if (!req.body.sm_name || !req.body.sm_maker) {
             return res.status(400).json({ error: 'Product name and maker are required' });
-          }
+         }
 
-         // Convert numeric fields to appropriate types
-        const productData = {
+            // Convert numeric fields to appropriate types
+           const productData = {
             sm_name: req.body.sm_name,
             sm_maker: req.body.sm_maker,
             sm_price: req.body.sm_price ? parseFloat(req.body.sm_price) : null,
@@ -355,28 +403,31 @@ app.post('/products/manage', async (req, res, next) => {
             operating_system: req.body.operating_system || null,
             package_contents: req.body.package_contents || null
         };
-            // Remove any undefined values
+
+             // Remove any undefined values
              Object.keys(productData).forEach(key =>
                  productData[key] === undefined && delete productData[key]
              );
-           if (action === 'add') {
-                // Create the INSERT query dynamically
-               const fields = Object.keys(productData);
-               const placeholders = fields.map(() => '?').join(', ');
-               const values = fields.map(field => productData[field]);
 
-                const result = await queryDatabase(req.db,`INSERT INTO phone_specs (${fields.join(', ')}) VALUES (${placeholders})`, values);
+         if (action === 'add') {
+                 // Create the INSERT query dynamically
+                const fields = Object.keys(productData);
+                const placeholders = fields.map(() => '?').join(', ');
+                const values = fields.map(field => productData[field]);
 
-             if (result.affectedRows !== 1) {
-                   throw new Error('Failed to add product');
-                }
+                 const result = await queryDatabase(req.db,`INSERT INTO phone_specs (${fields.join(', ')}) VALUES (${placeholders})`, values);
+
+              if (result.affectedRows !== 1) {
+                    throw new Error('Failed to add product');
+                 }
+
 
          }  else if (action === 'update') {
-               if (!id) {
+                if (!id) {
                     return res.status(400).json({ error: 'Product ID is required for update' });
-               }
-               const setClause = Object.keys(productData)
-               .map(field => `${field} = ?`)
+                }
+                const setClause = Object.keys(productData)
+                .map(field => `${field} = ?`)
                 .join(', ');
                 const values = [...Object.values(productData), id];
                 const result = await queryDatabase(req.db,`UPDATE phone_specs SET ${setClause} WHERE id = ?`, values)
@@ -386,19 +437,20 @@ app.post('/products/manage', async (req, res, next) => {
                  }
         }  else {
             return res.status(400).json({ error: 'Invalid action specified' });
-        }
+         }
 
-        res.redirect('/products');
+         res.redirect('/products');
 
     } catch (error) {
          console.error('Error during product management:', error);
         // Send a more specific error message
-        res.status(500).json({
-         error: 'Database operation failed',
-            details: error.message
-         });
-   }
+            res.status(500).json({
+            error: 'Database operation failed',
+             details: error.message
+            });
+     }
 });
+
 
 
 // Graceful Shutdown
