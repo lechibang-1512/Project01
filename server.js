@@ -1,20 +1,13 @@
 const express = require('express');
-const mysql = require('mysql2');
+const mysql = require('mysql2/promise'); // Using promise-based API
 const path = require('path');
 const bodyParser = require('body-parser');
-
+const { performance } = require('perf_hooks'); // for performance metrics
 const app = express();
 
-// Middleware setup
-app.set('view engine', 'ejs');
-app.set('views', path.join(__dirname, 'views'));
-app.use(express.static(path.join(__dirname, 'public')));
-app.use(bodyParser.urlencoded({ extended: true }));
-app.use(bodyParser.json());
-
-
-// MySQL connection pool
-const pool = mysql.createPool({
+// --- Configuration ---
+const PORT = process.env.PORT || 3000;
+const DB_CONFIG = {
     host: 'localhost',
     user: 'root',
     password: '1212',
@@ -22,42 +15,73 @@ const pool = mysql.createPool({
     waitForConnections: true,
     connectionLimit: 10,
     queueLimit: 0
-});
+};
 
-// Database connection middleware
+// --- Middleware Setup ---
+app.set('view engine', 'ejs');
+app.set('views', path.join(__dirname, 'views'));
+app.use(express.static(path.join(__dirname, 'public')));
+app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.json());
+
+// --- Database Connection Pool ---
+const pool = mysql.createPool(DB_CONFIG);
+
+
+// Database Connection Middleware (Optimized)
 app.use(async (req, res, next) => {
     try {
-        req.db = await pool.promise().getConnection();
+        req.db = await pool.getConnection();
         res.on('finish', () => req.db.release());
         next();
     } catch (err) {
         console.error('Database connection error:', err);
-        res.status(500).send('Database connection error');
+       // Added error response in the middleware
+       return res.status(500).render('error', { message: 'Database connection error' });
     }
 });
 
-// Homepage route
+
+// --- Route Handlers ---
+
+// Error handling Middleware
+app.use((err, req, res, next) => {
+    console.error('Error:', err);
+    res.status(500).render('error', {
+        message: 'An error occurred. Please try again later.',
+         errorDetails: err.message  // Include the error message in the rendered view
+    });
+});
+
+
+// Helper function for database queries and perf measuring.
+async function queryDatabase(db, sql, params = []) {
+    const startTime = performance.now();
+    try {
+        const [rows] = await db.execute(sql, params);
+        const endTime = performance.now();
+        console.log(`Query Time: ${endTime - startTime} ms`);
+        return rows;
+    } catch (error) {
+         console.error("Database Query Failed:", error);
+         throw error;  // Re-throw error to be handled by the route
+    }
+}
+// Homepage Route
 app.get('/', (req, res) => {
     res.render('homepage');
 });
 
-// Products route with filtering
+// Products Route with Filtering
 app.get('/products', async (req, res, next) => {
     const { brand, subbrand, model } = req.query;
-
     try {
-        // Fetch filter options
-        const [brands] = await req.db.execute(
-            'SELECT DISTINCT sm_maker FROM phone_specs ORDER BY sm_maker'
-        );
-
-        const [subbrands] = await req.db.execute(
-            'SELECT DISTINCT subbrand FROM phone_specs WHERE subbrand IS NOT NULL ORDER BY subbrand'
-        );
-
-        const [models] = await req.db.execute(
-            'SELECT DISTINCT sm_name FROM phone_specs ORDER BY sm_name'
-        );
+      // Fetch filter options
+        const [brands, subbrands, models] = await Promise.all([
+              queryDatabase(req.db,'SELECT DISTINCT sm_maker FROM phone_specs ORDER BY sm_maker'),
+              queryDatabase(req.db,'SELECT DISTINCT subbrand FROM phone_specs WHERE subbrand IS NOT NULL ORDER BY subbrand'),
+              queryDatabase(req.db,'SELECT DISTINCT sm_name FROM phone_specs ORDER BY sm_name')
+        ])
 
         // Build the product query
         let query = `
@@ -96,7 +120,7 @@ app.get('/products', async (req, res, next) => {
         query += ' ORDER BY sm_maker, sm_name';
 
         // Execute the query
-        const [products] = await req.db.execute(query, params);
+        const products = await queryDatabase(req.db, query, params);
 
         // Render the page with results
         res.render('products', {
@@ -108,25 +132,20 @@ app.get('/products', async (req, res, next) => {
             selectedSubbrand: subbrand || '',
             selectedModel: model || ''
         });
-
     } catch (error) {
         console.error('Error in /products route:', error);
-        next(error);
+        next(error) // Pass the error to the error handling middleware
     }
 });
 
-// Single product details route
+
+// Single Product Details Route
 app.get('/product/:id', async (req, res, next) => {
     try {
-        const [product] = await req.db.execute(
-            'SELECT * FROM phone_specs WHERE id = ?',
-            [req.params.id]
-        );
+        const product = await queryDatabase(req.db,'SELECT * FROM phone_specs WHERE id = ?', [req.params.id])
 
         if (!product || product.length === 0) {
-            return res.status(404).render('error', {
-                message: 'Product not found'
-            });
+            return res.status(404).render('error', { message: 'Product not found' });
         }
 
         res.render('productDetails', { product: product[0] });
@@ -136,11 +155,11 @@ app.get('/product/:id', async (req, res, next) => {
     }
 });
 
-// Purchase History route
+// Purchase History Route
 app.get('/purchaseHistory', async (req, res, next) => {
     try {
-        const [orders] = await req.db.execute(`
-            SELECT 
+           const orders =  await queryDatabase(req.db,`
+            SELECT
                 c.first_name,
                 c.last_name,
                 c.email,
@@ -159,17 +178,82 @@ app.get('/purchaseHistory', async (req, res, next) => {
             JOIN customer_data.customer_info c ON od.customer_id = c.customer_id
             ORDER BY od.order_date DESC
         `);
-        res.render('purchaseHistory', { orders });
+
+        let totalSales = 0;
+        let customerSales = {};
+        let deviceSales = {};
+        let numberOfOrders = 0;
+
+
+        if (orders && orders.length > 0) {
+            numberOfOrders = orders.length;
+            orders.forEach(order => {
+                const price = parseFloat(order.sm_price);
+                if (!isNaN(price)) {
+                    totalSales += price;
+
+                    const customerName = `${order.first_name} ${order.last_name}`;
+                    customerSales[customerName] = (customerSales[customerName] || 0) + price;
+
+                    deviceSales[order.sm_name] = (deviceSales[order.sm_name] || 0) + price;
+
+                } else {
+                    console.warn(`Invalid price encountered: ${order.sm_price}`);
+                }
+            });
+
+           // Find Top Customer
+            let topCustomer = Object.keys(customerSales).reduce((a, b) => customerSales[a] > customerSales[b] ? a : b, 'N/A');
+
+
+           // Find Top Device
+           let topDevice = Object.keys(deviceSales).reduce((a, b) => deviceSales[a] > deviceSales[b] ? a : b, 'N/A');
+
+
+             //Calculate average sales
+            const avgSalesPerCustomer = Object.keys(customerSales).length > 0 ? totalSales / Object.keys(customerSales).length : 0
+
+            //Get Top 5 Customers
+            const topCustomers = Object.entries(customerSales)
+                .sort(([, a], [, b]) => b - a)
+                .slice(0, 5)
+                .map(([name, sales]) => ({name, sales}));
+
+             //Get Top 5 Devices
+             const topDevices = Object.entries(deviceSales)
+                .sort(([, a], [, b]) => b - a)
+                .slice(0, 5)
+                .map(([name, sales]) => ({name, sales}));
+
+
+
+
+            res.render('purchaseHistory', {
+                orders: orders,
+                totalSales: totalSales,
+                topCustomer: topCustomer === 'N/A' ? "No Data Available": topCustomer,
+                topDevice: topDevice === 'N/A' ? "No Data Available": topDevice,
+                avgSalesPerCustomer: avgSalesPerCustomer,
+                numberOfOrders: numberOfOrders,
+                topCustomers: topCustomers,
+                topDevices: topDevices
+
+            });
+
+        } else {
+            res.render('purchaseHistory', { orders });
+        }
+
     } catch (error) {
         console.error('Error fetching purchase history:', error);
         next(error);
     }
 });
 
-// Customer Info route
+// Customer Info Route
 app.get('/customerInfo', async (req, res, next) => {
     try {
-        const { customerId } = req.query;
+         const { customerId } = req.query;
         let query = 'SELECT * FROM customer_data.customer_info';
         let params = [];
 
@@ -180,11 +264,12 @@ app.get('/customerInfo', async (req, res, next) => {
 
         query += ' ORDER BY customer_id';
 
-        const [customers] = await req.db.execute(query, params);
-        res.render('customerInfo', { customers });
+         const customers = await queryDatabase(req.db, query, params);
+
+         res.render('customerInfo', { customers });
     } catch (error) {
-        console.error('Error fetching customer info:', error);
-        next(error);
+         console.error('Error fetching customer info:', error);
+         next(error);
     }
 });
 
@@ -192,42 +277,39 @@ app.get('/customerInfo', async (req, res, next) => {
 // Product Management Route (CRUD)
 app.post('/products/manage', async (req, res, next) => {
     try {
-        // Validate that action exists
+         // Validate that action exists
         if (!req.body.action) {
-            return res.status(400).json({ error: 'Action is required' });
+           return res.status(400).json({ error: 'Action is required' });
         }
 
         const { action, id } = req.body;
 
-        // For delete operation, we only need the id
+            // For delete operation, we only need the id
         if (action === 'delete') {
             if (!id) {
-                return res.status(400).json({ error: 'Product ID is required for deletion' });
-            }
+               return res.status(400).json({ error: 'Product ID is required for deletion' });
+           }
 
-            const [result] = await req.db.execute(
-                'DELETE FROM phone_specs WHERE id = ?',
-                [id]
-            );
-
-            if (result.affectedRows === 0) {
+            const result =  await queryDatabase(req.db,'DELETE FROM phone_specs WHERE id = ?', [id])
+              if (!result.affectedRows === 1) {
                 return res.status(404).json({ error: 'Product not found' });
             }
 
             return res.redirect('/products');
-        }
+         }
 
-        // For add and update operations, validate required fields
-        if (!req.body.sm_name || !req.body.sm_maker) {
+
+         // For add and update operations, validate required fields
+         if (!req.body.sm_name || !req.body.sm_maker) {
             return res.status(400).json({ error: 'Product name and maker are required' });
-        }
+          }
 
-        // Convert numeric fields to appropriate types
+         // Convert numeric fields to appropriate types
         const productData = {
             sm_name: req.body.sm_name,
             sm_maker: req.body.sm_maker,
-            sm_price: req.body.sm_price ? parseInt(req.body.sm_price, 10) : null,
-            sm_inventory: req.body.sm_inventory ? parseInt(req.body.sm_inventory, 10) : null,
+            sm_price: req.body.sm_price ? parseFloat(req.body.sm_price) : null,
+            sm_inventory: req.body.sm_inventory ? parseFloat(req.body.sm_inventory) : null,
             subbrand: req.body.subbrand || null,
             color: req.body.color || null,
             water_and_dust_rating: req.body.water_and_dust_rating || null,
@@ -243,12 +325,12 @@ app.post('/products/manage', async (req, res, next) => {
             length_mm: req.body.length_mm ? parseFloat(req.body.length_mm) : null,
             width_mm: req.body.width_mm ? parseFloat(req.body.width_mm) : null,
             thickness_mm: req.body.thickness_mm ? parseFloat(req.body.thickness_mm) : null,
-            weight_g: req.body.weight_g ? parseInt(req.body.weight_g, 10) : null,
+            weight_g: req.body.weight_g ? parseFloat(req.body.weight_g) : null,
             display_size: req.body.display_size ? parseFloat(req.body.display_size) : null,
             resolution: req.body.resolution || null,
             pixel_density: req.body.pixel_density ? parseInt(req.body.pixel_density, 10) : null,
             refresh_rate: req.body.refresh_rate || null,
-            brightness: req.body.brightness || null,
+             brightness: req.body.brightness || null,
             display_features: req.body.display_features || null,
             rear_camera_main: req.body.rear_camera_main || null,
             rear_camera_macro: req.body.rear_camera_macro || null,
@@ -257,12 +339,12 @@ app.post('/products/manage', async (req, res, next) => {
             front_camera: req.body.front_camera || null,
             front_camera_features: req.body.front_camera_features || null,
             front_video_resolution: req.body.front_video_resolution || null,
-            battery_capacity: req.body.battery_capacity ? parseInt(req.body.battery_capacity, 10) : null,
-            fast_charging: req.body.fast_charging || null,
+            battery_capacity: req.body.battery_capacity ? parseFloat(req.body.battery_capacity) : null,
+             fast_charging: req.body.fast_charging || null,
             connector: req.body.connector || null,
             security_features: req.body.security_features || null,
             sim_card: req.body.sim_card || null,
-            nfc: req.body.nfc || null,
+           nfc: req.body.nfc || null,
             network_bands: req.body.network_bands || null,
             wireless_connectivity: req.body.wireless_connectivity || null,
             navigation: req.body.navigation || null,
@@ -273,70 +355,53 @@ app.post('/products/manage', async (req, res, next) => {
             operating_system: req.body.operating_system || null,
             package_contents: req.body.package_contents || null
         };
+            // Remove any undefined values
+             Object.keys(productData).forEach(key =>
+                 productData[key] === undefined && delete productData[key]
+             );
+           if (action === 'add') {
+                // Create the INSERT query dynamically
+               const fields = Object.keys(productData);
+               const placeholders = fields.map(() => '?').join(', ');
+               const values = fields.map(field => productData[field]);
 
-        // Remove any undefined values
-        Object.keys(productData).forEach(key => 
-            productData[key] === undefined && delete productData[key]
-        );
+                const result = await queryDatabase(req.db,`INSERT INTO phone_specs (${fields.join(', ')}) VALUES (${placeholders})`, values);
 
-        if (action === 'add') {
-            // Create the INSERT query dynamically
-            const fields = Object.keys(productData);
-            const placeholders = fields.map(() => '?').join(', ');
-            const values = fields.map(field => productData[field]);
-            
-            const query = `INSERT INTO phone_specs (${fields.join(', ')}) VALUES (${placeholders})`;
-            
-            const [result] = await req.db.execute(query, values);
-            
-            if (result.affectedRows !== 1) {
-                throw new Error('Failed to add product');
-            }
+             if (result.affectedRows !== 1) {
+                   throw new Error('Failed to add product');
+                }
 
-        } else if (action === 'update') {
-            if (!id) {
-                return res.status(400).json({ error: 'Product ID is required for update' });
-            }
-
-            // Create the UPDATE query dynamically
-            const setClause = Object.keys(productData)
-                .map(field => `${field} = ?`)
+         }  else if (action === 'update') {
+               if (!id) {
+                    return res.status(400).json({ error: 'Product ID is required for update' });
+               }
+               const setClause = Object.keys(productData)
+               .map(field => `${field} = ?`)
                 .join(', ');
-            const values = [...Object.values(productData), id];
-            
-            const query = `UPDATE phone_specs SET ${setClause} WHERE id = ?`;
-            
-            const [result] = await req.db.execute(query, values);
+                const values = [...Object.values(productData), id];
+                const result = await queryDatabase(req.db,`UPDATE phone_specs SET ${setClause} WHERE id = ?`, values)
 
-            if (result.affectedRows !== 1) {
-                return res.status(404).json({ error: 'Product not found' });
-            }
-        } else {
+                 if (!result.affectedRows === 1) {
+                    return res.status(404).json({ error: 'Product not found' });
+                 }
+        }  else {
             return res.status(400).json({ error: 'Invalid action specified' });
         }
 
         res.redirect('/products');
 
     } catch (error) {
-        console.error('Error during product management:', error);
+         console.error('Error during product management:', error);
         // Send a more specific error message
-        res.status(500).json({ 
-            error: 'Database operation failed', 
-            details: error.message 
-        });
-    }
+        res.status(500).json({
+         error: 'Database operation failed',
+            details: error.message
+         });
+   }
 });
 
 
-// Error handling middleware
-app.use((err, req, res, next) => {
-    console.error('Error:', err);
-    res.status(500).render('error', {
-        message: 'An error occurred. Please try again later.'
-    });
-});
-
-// Graceful shutdown
+// Graceful Shutdown
 process.on('SIGINT', () => {
     pool.end(err => {
         if (err) console.error('Error closing MySQL pool:', err);
@@ -344,8 +409,7 @@ process.on('SIGINT', () => {
     });
 });
 
-// Start server
-const port = process.env.PORT || 3000;
-app.listen(port, () => {
-    console.log(`Server running on port ${port}`);
+// Start Server
+app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
 });
