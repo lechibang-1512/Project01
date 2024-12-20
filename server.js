@@ -128,7 +128,7 @@ app.get('/products', async (req, res, next) => {
      if(!auth.isAuthenticated(req)){
         return res.redirect('/admin/login');
     }
-    const { brand, subbrand, model } = req.query;
+    const { brand, subbrand, model, image_url } = req.query;
     try {
       // Fetch filter options
         const [brands, subbrands, models] = await Promise.all([
@@ -139,7 +139,7 @@ app.get('/products', async (req, res, next) => {
 
         // Build the product query
         let query = `
-            SELECT id, sm_name, sm_maker, sm_price, sm_inventory, subbrand, 
+            SELECT id, sm_name, image_url, sm_maker, sm_price, sm_inventory, subbrand, 
                    color, water_and_dust_rating, processor, process_node, 
                    cpu_cores, cpu_frequency, gpu, memory_type, ram, rom, 
                    expandable_memory, length_mm, width_mm, thickness_mm, 
@@ -169,6 +169,11 @@ app.get('/products', async (req, res, next) => {
         if (model) {
             query += ' AND sm_name = ?';
             params.push(model);
+        }
+
+        if (image_url) {
+            query += ' AND image_url = ?';
+            params.push(image_url);
         }
 
         query += ' ORDER BY sm_maker, sm_name';
