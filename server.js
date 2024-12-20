@@ -124,18 +124,15 @@ app.get('/', (req, res) => {
 });
 
 // Products Route with Filtering
-app.get('/products', async (req, res, next) => {
-     if(!auth.isAuthenticated(req)){
-        return res.redirect('/admin/login');
-    }
-    const { brand, subbrand, model, image_url } = req.query;
+app.get('/products', async (req, res) => {
     try {
-      // Fetch filter options
-        const [brands, subbrands, models] = await Promise.all([
-              queryDatabase(req.db,'SELECT DISTINCT sm_maker FROM phone_specs ORDER BY sm_maker'),
-              queryDatabase(req.db,'SELECT DISTINCT subbrand FROM phone_specs WHERE subbrand IS NOT NULL ORDER BY subbrand'),
-              queryDatabase(req.db,'SELECT DISTINCT sm_name FROM phone_specs ORDER BY sm_name')
-        ])
+        const products = await db.query('SELECT * FROM products'); // Adjust query if needed
+        res.render('products', { products });
+    } catch (err) {
+        console.error('Error fetching products:', err);
+        res.status(500).send('Error fetching products.');
+    }
+});
 
         // Build the product query
         let query = `
@@ -343,22 +340,20 @@ app.get('/customerInfo', async (req, res, next) => {
 
 
 // Product Management Route (CRUD)
-app.post('/products/manage', async (req, res, next) => {
+app.post('/products/manage', async (req, res) => {
     if (!auth.isAuthenticated(req)) {
         return res.redirect('/admin/login');
     }
 
     try {
-        console.log('Received Data:', req.body); // Log the received data
+        console.log('Received Data:', req.body);
 
-        // Validate that action exists
         if (!req.body.action) {
             return res.status(400).json({ error: 'Action is required' });
         }
 
         const { action, id } = req.body;
 
-        // Handle delete operation
         if (action === 'delete') {
             if (!id) {
                 return res.status(400).json({ error: 'Product ID is required for deletion' });
@@ -372,17 +367,14 @@ app.post('/products/manage', async (req, res, next) => {
             return res.redirect('/products');
         }
 
-        // Validate required fields for add and update operations
         if (!req.body.sm_name || !req.body.sm_maker) {
             return res.status(400).json({ error: 'Product name and maker are required' });
         }
 
-        // Convert and validate numeric fields according to schema
         const productData = {
             sm_name: req.body.sm_name.trim(),
             sm_maker: req.body.sm_maker.trim(),
             image_url: req.body.image_url?.trim() || null,
-            // Decimal(10,2) fields
             sm_price: req.body.sm_price ? parseFloat(parseFloat(req.body.sm_price).toFixed(2)) : null,
             sm_inventory: req.body.sm_inventory ? parseFloat(parseFloat(req.body.sm_inventory).toFixed(2)) : null,
             length_mm: req.body.length_mm ? parseFloat(parseFloat(req.body.length_mm).toFixed(2)) : null,
@@ -391,11 +383,7 @@ app.post('/products/manage', async (req, res, next) => {
             weight_g: req.body.weight_g ? parseFloat(parseFloat(req.body.weight_g).toFixed(2)) : null,
             display_size: req.body.display_size ? parseFloat(parseFloat(req.body.display_size).toFixed(2)) : null,
             battery_capacity: req.body.battery_capacity ? parseFloat(parseFloat(req.body.battery_capacity).toFixed(2)) : null,
-
-            // Integer field
             pixel_density: req.body.pixel_density ? parseInt(req.body.pixel_density, 10) : null,
-
-            // VARCHAR fields
             subbrand: req.body.subbrand?.trim() || null,
             color: req.body.color?.trim() || null,
             water_and_dust_rating: req.body.water_and_dust_rating?.trim() || null,
@@ -421,8 +409,6 @@ app.post('/products/manage', async (req, res, next) => {
             nfc: req.body.nfc?.trim() || null,
             audio_jack: req.body.audio_jack?.trim() || null,
             operating_system: req.body.operating_system?.trim() || null,
-
-            // TEXT fields
             display_features: req.body.display_features?.trim() || null,
             rear_camera_features: req.body.rear_camera_features?.trim() || null,
             front_camera_features: req.body.front_camera_features?.trim() || null,
@@ -436,9 +422,8 @@ app.post('/products/manage', async (req, res, next) => {
             package_contents: req.body.package_contents?.trim() || null
         };
 
-        // Validate numeric fields
         const decimalFields = ['sm_price', 'sm_inventory', 'length_mm', 'width_mm',
-                             'thickness_mm', 'weight_g', 'display_size', 'battery_capacity'];
+                               'thickness_mm', 'weight_g', 'display_size', 'battery_capacity'];
 
         for (const field of decimalFields) {
             if (productData[field] !== null && (isNaN(productData[field]) || !isFinite(productData[field]))) {
@@ -451,7 +436,6 @@ app.post('/products/manage', async (req, res, next) => {
             return res.status(400).json({ error: 'Invalid pixel density value' });
         }
 
-        // Remove any undefined values
         Object.keys(productData).forEach(key =>
             productData[key] === undefined && delete productData[key]
         );

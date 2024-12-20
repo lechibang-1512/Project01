@@ -148,28 +148,27 @@
         <% } %>
 
         <!-- Products List -->
-        <div class="product-container">
-            <% products.forEach(function(product) { %>
-                <div class="product-card" data-product='<%= JSON.stringify(product) %>'>
-                    <img src="<%= product.image_url || '/images/placeholder.png' %>"
-                         alt="<%= product.sm_name %>"
-                         class="product-image">
-                    <div class="product-info">
-                        <h2 class="product-name"><%= product.sm_name %></h2>
-                        <p class="product-maker">Brand: <%= product.sm_maker %></p>
-                        <p class="product-subbrand">Sub-brand: <%= product.subbrand || 'N/A' %></p>
-                        <p class="product-price">Price: $<%= Number(product.sm_price).toFixed(2) %></p>
-                        <p class="product-inventory">In Stock: <%= product.sm_inventory %></p>
-                        <a class="product-link" href="/product/<%= product.id %>">View Details</a>
-                         <!-- Update Button -->
-                        <div class="product-actions">
-                            <button onclick="openModal('update', this.closest('.product-card').dataset.product)">Update</button>
-                        </div>
-                    </div>
+        <!-- Products List -->
+<div class="product-container">
+    <% products.forEach(function(product) { %>
+        <div class="product-card" data-product='<%= JSON.stringify(product) %>'>
+            <img src="<%= product.image_url || '/images/placeholder.png' %>" alt="<%= product.sm_name %>" class="product-image">
+            <div class="product-info">
+                <h2 class="product-name"><%= product.sm_name %></h2>
+                <p class="product-maker">Brand: <%= product.sm_maker %></p>
+                <p class="product-subbrand">Sub-brand: <%= product.subbrand || 'N/A' %></p>
+                <p class="product-price">Price: $<%= Number(product.sm_price).toFixed(2) %></p>
+                <p class="product-inventory">In Stock: <%= product.sm_inventory %></p>
+                <a class="product-link" href="/product/<%= product.id %>">View Details</a>
+                <div class="product-actions">
+                    <button onclick="openModal('update', this.closest('.product-card').dataset.product)">Update</button>
                 </div>
-            <% }); %>
+            </div>
         </div>
-         <!-- The Modal -->
+    <% }); %>
+</div>
+
+<!-- The Modal -->
         <div id="productModal" class="modal">
         <div class="modal-content">
             <span class="close" onclick="closeModal()">×</span>
@@ -394,11 +393,9 @@
     var modalAction = document.getElementById('modalAction');
     var productId = document.getElementById('productId');
 
-    // Reset fields
     modal.style.display = "block";
 
-     if (action === 'add') {
-        // Only reset the form for 'add' action
+    if (action === 'add') {
         form.reset();
         modalTitle.innerText = 'Add Product';
         modalAction.value = 'add';
@@ -406,28 +403,21 @@
     } else if (action === 'update') {
         modalTitle.innerText = 'Update Product';
         modalAction.value = 'update';
-        
-        try {
-            var product = typeof productData === 'string' ? JSON.parse(productData) : productData;
-            productId.value = product.id;
 
-            // Populate all fields without resetting first
-            Object.keys(product).forEach(key => {
-                const element = document.getElementById(key);
-                if (element) {
-                    element.value = product[key] || '';
-                }
-            });
-            
-            // Add console logging for debugging
-            console.log('Modal populated with data:', {
-                subbrand: product.subbrand,
-                image_url: product.image_url
-            });
-        } catch (error) {
-            console.error('Error populating modal:', error);
-        }
+        var product = JSON.parse(productData);
+        productId.value = product.id;
+
+        // Populate all fields, including sub-brand
+        document.getElementById('sm_name').value = product.sm_name || '';
+        document.getElementById('sm_maker').value = product.sm_maker || '';
+        document.getElementById('subbrand').value = product.subbrand || ''; // Populate sub-brand field
+        document.getElementById('sm_price').value = product.sm_price || '';
+        document.getElementById('sm_inventory').value = product.sm_inventory || '';
+        document.getElementById('image_url').value = product.image_url || '';
     }
+}
+
+
 
         // Populate all fields, including blank ones
         document.getElementById('sm_name').value = product.sm_name || '';
@@ -479,19 +469,10 @@
         document.getElementById('operating_system').value = product.operating_system || '';
         document.getElementById('package_contents').value = product.package_contents || '';
         document.getElementById('image_url').value = product.image_url || '';
-    }
-
-form.onsubmit = function(e) {
-        const formData = new FormData(form);
-        console.log('Form submission data:', {
-            subbrand: formData.get('subbrand'),
-            image_url: formData.get('image_url')
-        });
 
 function closeModal() {
     var modal = document.getElementById('productModal');
     modal.style.display = "none";
-}
 }
     </script>
 </body>
