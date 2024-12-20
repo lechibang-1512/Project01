@@ -500,11 +500,25 @@ app.post('/products/manage', async (req, res, next) => {
 
 
 // Graceful Shutdown
-process.on('SIGINT', () => {
-    pool.end(err => {
-        if (err) console.error('Error closing MySQL pool:', err);
-        process.exit(err ? 1 : 0);
-    });
+// At your server.js where you handle process termination
+process.on('SIGINT', async () => {
+    try {
+        // Check if pool exists and isn't already closed
+        if (pool && !pool._closed) {
+            console.log('Closing database connection pool...');
+            await pool.end();
+            console.log('Database connection pool closed successfully');
+        }
+        
+        // Graceful server shutdown
+        server.close(() => {
+            console.log('Server closed successfully');
+            process.exit(0);
+        });
+    } catch (error) {
+        console.error('Error during shutdown:', error);
+        process.exit(1);
+    }
 });
 
 // Start Server
