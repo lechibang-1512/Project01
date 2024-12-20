@@ -347,8 +347,10 @@ app.post('/products/manage', async (req, res, next) => {
     if (!auth.isAuthenticated(req)) {
         return res.redirect('/admin/login');
     }
-    
+
     try {
+        console.log('Received Data:', req.body); // Log the received data
+
         // Validate that action exists
         if (!req.body.action) {
             return res.status(400).json({ error: 'Action is required' });
@@ -389,10 +391,10 @@ app.post('/products/manage', async (req, res, next) => {
             weight_g: req.body.weight_g ? parseFloat(parseFloat(req.body.weight_g).toFixed(2)) : null,
             display_size: req.body.display_size ? parseFloat(parseFloat(req.body.display_size).toFixed(2)) : null,
             battery_capacity: req.body.battery_capacity ? parseFloat(parseFloat(req.body.battery_capacity).toFixed(2)) : null,
-            
+
             // Integer field
             pixel_density: req.body.pixel_density ? parseInt(req.body.pixel_density, 10) : null,
-            
+
             // VARCHAR fields
             subbrand: req.body.subbrand?.trim() || null,
             color: req.body.color?.trim() || null,
@@ -419,7 +421,7 @@ app.post('/products/manage', async (req, res, next) => {
             nfc: req.body.nfc?.trim() || null,
             audio_jack: req.body.audio_jack?.trim() || null,
             operating_system: req.body.operating_system?.trim() || null,
-            
+
             // TEXT fields
             display_features: req.body.display_features?.trim() || null,
             rear_camera_features: req.body.rear_camera_features?.trim() || null,
@@ -435,22 +437,22 @@ app.post('/products/manage', async (req, res, next) => {
         };
 
         // Validate numeric fields
-        const decimalFields = ['sm_price', 'sm_inventory', 'length_mm', 'width_mm', 
+        const decimalFields = ['sm_price', 'sm_inventory', 'length_mm', 'width_mm',
                              'thickness_mm', 'weight_g', 'display_size', 'battery_capacity'];
-        
+
         for (const field of decimalFields) {
             if (productData[field] !== null && (isNaN(productData[field]) || !isFinite(productData[field]))) {
                 return res.status(400).json({ error: `Invalid numeric value for ${field}` });
             }
         }
 
-        if (productData.pixel_density !== null && 
+        if (productData.pixel_density !== null &&
             (isNaN(productData.pixel_density) || !Number.isInteger(productData.pixel_density))) {
             return res.status(400).json({ error: 'Invalid pixel density value' });
         }
 
         // Remove any undefined values
-        Object.keys(productData).forEach(key => 
+        Object.keys(productData).forEach(key =>
             productData[key] === undefined && delete productData[key]
         );
 
@@ -501,6 +503,7 @@ app.post('/products/manage', async (req, res, next) => {
         });
     }
 });
+
 
 
 
