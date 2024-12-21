@@ -124,16 +124,12 @@ app.get('/', (req, res) => {
 });
 
 // Products Route with Filtering
-app.get('/products', async (req, res) => {
-    try {
-        const products = await db.query('SELECT * FROM products'); // Adjust query if needed
-        res.render('products', { products });
-    } catch (err) {
-        console.error('Error fetching products:', err);
-        res.status(500).send('Error fetching products.');
+app.get('/products', async (req, res, next) => {
+    if (!auth.isAuthenticated(req)) {
+        return res.redirect('/admin/login');
     }
-});
 
+    try {
         // Build the product query
         let query = `
             SELECT id, sm_name, image_url, sm_maker, sm_price, sm_inventory, subbrand, 
@@ -155,22 +151,22 @@ app.get('/products', async (req, res) => {
 
         const params = [];
 
-        if (brand) {
+        if (req.query.brand) {
             query += ' AND sm_maker = ?';
-            params.push(brand);
+            params.push(req.query.brand);
         }
-        if (subbrand) {
+        if (req.query.subbrand) {
             query += ' AND subbrand = ?';
-            params.push(subbrand);
+            params.push(req.query.subbrand);
         }
-        if (model) {
+        if (req.query.model) {
             query += ' AND sm_name = ?';
-            params.push(model);
+            params.push(req.query.model);
         }
 
-        if (image_url) {
+        if (req.query.image_url) {
             query += ' AND image_url = ?';
-            params.push(image_url);
+            params.push(req.query.image_url);
         }
 
         query += ' ORDER BY sm_maker, sm_name';
@@ -181,16 +177,16 @@ app.get('/products', async (req, res) => {
         // Render the page with results
         res.render('products', {
             products,
-            brands,
-            subbrands,
-            models,
-            selectedBrand: brand || '',
-            selectedSubbrand: subbrand || '',
-            selectedModel: model || ''
+            brands: req.query.brands || [],
+            subbrands: req.query.subbrands || [],
+            models: req.query.models || [],
+            selectedBrand: req.query.brand || '',
+            selectedSubbrand: req.query.subbrand || '',
+            selectedModel: req.query.model || ''
         });
     } catch (error) {
         console.error('Error in /products route:', error);
-        next(error) // Pass the error to the error handling middleware
+        next(error); // Pass the error to the error handling middleware
     }
 });
 
@@ -367,10 +363,12 @@ app.post('/products/manage', async (req, res) => {
             return res.redirect('/products');
         }
 
+        // Check for required fields for add/update
         if (!req.body.sm_name || !req.body.sm_maker) {
             return res.status(400).json({ error: 'Product name and maker are required' });
         }
 
+        // Preparing product data, including the subbrand
         const productData = {
             sm_name: req.body.sm_name.trim(),
             sm_maker: req.body.sm_maker.trim(),
@@ -384,7 +382,7 @@ app.post('/products/manage', async (req, res) => {
             display_size: req.body.display_size ? parseFloat(parseFloat(req.body.display_size).toFixed(2)) : null,
             battery_capacity: req.body.battery_capacity ? parseFloat(parseFloat(req.body.battery_capacity).toFixed(2)) : null,
             pixel_density: req.body.pixel_density ? parseInt(req.body.pixel_density, 10) : null,
-            subbrand: req.body.subbrand?.trim() || null,
+            subbrand: req.body.subbrand?.trim() || null, // Ensure subbrand is included
             color: req.body.color?.trim() || null,
             water_and_dust_rating: req.body.water_and_dust_rating?.trim() || null,
             processor: req.body.processor?.trim() || null,
@@ -487,6 +485,7 @@ app.post('/products/manage', async (req, res) => {
         });
     }
 });
+
 
 
 

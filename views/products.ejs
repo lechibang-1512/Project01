@@ -410,18 +410,6 @@
         // Populate all fields, including sub-brand
         document.getElementById('sm_name').value = product.sm_name || '';
         document.getElementById('sm_maker').value = product.sm_maker || '';
-        document.getElementById('subbrand').value = product.subbrand || ''; // Populate sub-brand field
-        document.getElementById('sm_price').value = product.sm_price || '';
-        document.getElementById('sm_inventory').value = product.sm_inventory || '';
-        document.getElementById('image_url').value = product.image_url || '';
-    }
-}
-
-
-
-        // Populate all fields, including blank ones
-        document.getElementById('sm_name').value = product.sm_name || '';
-        document.getElementById('sm_maker').value = product.sm_maker || '';
         document.getElementById('subbrand').value = product.subbrand || '';
         document.getElementById('sm_price').value = product.sm_price || '';
         document.getElementById('sm_inventory').value = product.sm_inventory || '';
@@ -469,6 +457,8 @@
         document.getElementById('operating_system').value = product.operating_system || '';
         document.getElementById('package_contents').value = product.package_contents || '';
         document.getElementById('image_url').value = product.image_url || '';
+    }
+}
 
 function closeModal() {
     var modal = document.getElementById('productModal');
